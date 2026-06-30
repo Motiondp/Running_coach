@@ -1,0 +1,25 @@
+{
+  "name": "@crucible/core",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Pure-TS core: snapshot contract, strength model, verdict, bodycomp, intervals client, technogym parser. No RN/Deno deps.",
+  "exports": {
+    ".": "./src/index.ts",
+    "./dates": "./src/dates/index.ts",
+    "./intervals": "./src/intervals/index.ts",
+    "./technogym": "./src/technogym/index.ts",
+    "./bodycomp": "./src/bodycomp/index.ts",
+    "./strength": "./src/strength/index.ts",
+    "./verdict": "./src/verdict/index.ts",
+    "./snapshot": "./src/snapshot/index.ts"
+  },
+  "types": "./src/index.ts",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "vitest": "^2.1.8"
+  }
+}

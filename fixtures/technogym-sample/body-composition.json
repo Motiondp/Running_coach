@@ -1,0 +1,33 @@
+{
+  "_note": "SYNTHETIC fixture modelled on the brief's real Technogym/Tanita panel. Not real data. Replace with a real export (fixtures/real/, gitignored) to validate field names/units/UUIDs — see assumption A2. Includes a deliberate NZ-trap timestamp (2026-06-30T13:00:00Z → 2026-07-01 NZ) and two scan dates so recomp has something to compare.",
+  "measurements": [
+    { "metricName": "Weight", "value": 91.5, "unit": "kg", "timestamp": "2026-05-19T20:30:00Z" },
+    { "metricName": "Weight", "value": 90.2, "unit": "kg", "timestamp": "2026-06-30T13:00:00Z" },
+
+    { "metricName": "Body Fat", "value": 28.0, "unit": "%", "timestamp": "2026-03-13T19:45:00Z" },
+    { "metricName": "Body Fat", "value": 26.4, "unit": "%", "timestamp": "2026-06-13T19:50:00Z" },
+
+    { "metricName": "Fat Mass", "value": 25.6, "unit": "kg", "timestamp": "2026-03-13T19:45:00Z" },
+    { "metricName": "Fat Mass", "value": 24.2, "unit": "kg", "timestamp": "2026-06-13T19:50:00Z" },
+
+    { "metricName": "Muscle Mass", "value": 63.5, "unit": "kg", "timestamp": "2026-03-13T19:45:00Z" },
+    { "metricName": "Muscle Mass", "value": 64.0, "unit": "kg", "timestamp": "2026-06-13T19:50:00Z" },
+
+    { "metricName": "BMR", "value": 1978, "unit": "kcal", "timestamp": "2026-03-13T19:45:00Z" },
+    { "metricName": "BMR", "value": 1991, "unit": "kcal", "timestamp": "2026-06-13T19:50:00Z" },
+
+    { "metricName": "Fat Free Mass", "value": 66.2, "unit": "kg", "timestamp": "2026-03-13T19:45:00Z" },
+    { "metricName": "Fat Free Mass", "value": 66.8, "unit": "kg", "timestamp": "2026-06-13T19:50:00Z" },
+
+    { "metricName": "Total Body Water %", "value": 53.2, "unit": "%", "timestamp": "2026-06-13T19:50:00Z" },
+    { "metricName": "Total Body Water", "value": 49.4, "unit": "kg", "timestamp": "2026-06-13T19:50:00Z" },
+    { "metricName": "Intracellular Water", "value": 29.8, "unit": "kg", "timestamp": "2026-06-13T19:50:00Z" },
+    { "metricName": "Extracellular Water", "value": 19.6, "unit": "kg", "timestamp": "2026-06-13T19:50:00Z" },
+
+    { "metricName": "Bone Mass", "value": 3.3, "unit": "kg", "timestamp": "2026-06-13T19:50:00Z" },
+    { "metricName": "Visceral Fat", "value": 12, "unit": "lvl", "timestamp": "2026-06-13T19:50:00Z" },
+    { "metricName": "BMI", "value": 31.7, "unit": "", "timestamp": "2026-06-13T19:50:00Z" },
+
+    { "metricId": "b7c1e2a0-0000-4000-8000-unknownmetric", "value": 42, "unit": "?", "timestamp": "2026-06-13T19:50:00Z" }
+  ]
+}

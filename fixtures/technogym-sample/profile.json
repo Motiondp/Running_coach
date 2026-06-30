@@ -1,0 +1,8 @@
+{
+  "_note": "SYNTHETIC profile file from the export. Crucible reads little from this directly; kept so the fixture mirrors the real 4-file ZIP layout.",
+  "name": "Test Athlete",
+  "sex": "M",
+  "birthDate": "1988-04-02",
+  "heightCm": 170,
+  "timezone": "Pacific/Auckland"
+}

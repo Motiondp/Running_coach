@@ -1,0 +1,4 @@
+{
+  "_note": "SYNTHETIC. Outdoor activities file from the export. Endurance data comes from intervals.icu (which already ingests Garmin), so Crucible ignores this for now — kept to mirror the real 4-file ZIP layout.",
+  "activities": []
+}

@@ -1,0 +1,22 @@
+{
+  "name": "@crucible/scripts",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Phase 0 verification scripts — run against real intervals.icu + Technogym fixtures.",
+  "scripts": {
+    "verify": "tsx verify.ts",
+    "verify:intervals": "tsx verify-intervals.ts",
+    "parse:technogym": "tsx parse-technogym.ts",
+    "build:snapshot": "tsx build-snapshot.ts"
+  },
+  "dependencies": {
+    "@crucible/core": "*",
+    "fflate": "^0.8.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "dotenv": "^16.4.7",
+    "tsx": "^4.19.2"
+  }
+}

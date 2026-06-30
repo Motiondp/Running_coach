@@ -1,0 +1,28 @@
+# dependencies
+node_modules/
+
+# build output
+dist/
+*.tsbuildinfo
+
+# env / secrets — never commit API keys
+.env
+.env.local
+*.local
+
+# real exports (may contain personal data) — keep synthetic fixtures only
+fixtures/real/
+*.real.zip
+
+# os / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# logs
+*.log
+npm-debug.log*
+
+# Phase 0 generated artifacts
+artifacts/

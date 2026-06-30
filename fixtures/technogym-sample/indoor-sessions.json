@@ -1,0 +1,23 @@
+{
+  "_note": "SYNTHETIC. Indoor gym sessions with per-set data. Exercises are UUID-only (quirk #1) — kind is inferred from the metrics present. Phase 0 question: is this per-set lifting data usable to seed the strength model?",
+  "sessions": [
+    {
+      "sessionId": "s-0001",
+      "timestamp": "2026-06-29T18:00:00Z",
+      "exercises": [
+        {
+          "exerciseId": "3f9a-uuid-squat",
+          "sets": [
+            { "weight": 140, "reps": 5 },
+            { "weight": 140, "reps": 5 },
+            { "weight": 150, "reps": 3 }
+          ]
+        },
+        {
+          "exerciseId": "7c2b-uuid-treadmill",
+          "sets": [{ "distance": 2000, "duration": 600 }]
+        }
+      ]
+    }
+  ]
+}

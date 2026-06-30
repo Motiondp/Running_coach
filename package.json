@@ -1,0 +1,25 @@
+{
+  "name": "crucible",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Crucible — personal AI coaching app for a hybrid athlete (endurance + strength).",
+  "workspaces": [
+    "packages/*",
+    "scripts"
+  ],
+  "scripts": {
+    "test": "npm run test --workspace packages/core",
+    "typecheck": "tsc -b packages/core scripts",
+    "verify": "npm run verify --workspace scripts",
+    "verify:intervals": "npm run verify:intervals --workspace scripts",
+    "parse:technogym": "npm run parse:technogym --workspace scripts",
+    "build:snapshot": "npm run build:snapshot --workspace scripts"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.3"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
