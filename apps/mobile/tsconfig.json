@@ -8,6 +8,9 @@
       ],
       "@/assets/*": [
         "./assets/*"
+      ],
+      "@core-direct/*": [
+        "../../packages/core/src/*"
       ]
     }
   },

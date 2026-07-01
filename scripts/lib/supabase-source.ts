@@ -10,6 +10,7 @@
 import { createClient } from "@supabase/supabase-js";
 import type {
   AthleteSection,
+  CheckInSection,
   ManualScanEntry,
   StrengthSetInput,
 } from "@crucible/core";
@@ -97,6 +98,24 @@ export async function fetchManualScanEntries(admin: Admin, userId: string): Prom
     unit: row.unit ?? undefined,
     date: row.date,
   }));
+}
+
+/** Fetch today's check-in row (by local date), if the athlete has logged one. */
+export async function fetchTodaysCheckin(
+  admin: Admin,
+  userId: string,
+  localDate: string,
+): Promise<CheckInSection> {
+  const { data, error } = await admin
+    .from("checkin")
+    .select("energy, pain")
+    .eq("user_id", userId)
+    .eq("date", localDate)
+    .maybeSingle();
+  if (error) throw error;
+
+  if (!data) return { present: false, energy: null, pain: [] };
+  return { present: true, energy: data.energy, pain: data.pain ?? [] };
 }
 
 /** Insert the assembled snapshot (+ computed readiness) as a new athlete_snapshot row. */

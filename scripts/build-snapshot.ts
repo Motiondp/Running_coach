@@ -36,6 +36,7 @@ import {
   fetchAthleteSection,
   fetchManualScanEntries,
   fetchStrengthSets,
+  fetchTodaysCheckin,
   writeSnapshot,
 } from "./lib/supabase-source.js";
 
@@ -102,6 +103,7 @@ export async function buildSnapshot(): Promise<boolean> {
   let athlete = SAMPLE_ATHLETE;
   let scanEntries = SAMPLE_SCAN;
   let strengthSets = SAMPLE_LIFTS;
+  let checkin: Awaited<ReturnType<typeof fetchTodaysCheckin>> | undefined;
   let userId: string | undefined;
 
   if (supabaseConfigured) {
@@ -112,13 +114,14 @@ export async function buildSnapshot(): Promise<boolean> {
     if (!user) throw new Error(`Seeded user ${SEED_EMAIL} not found — run npm run db:seed first.`);
     userId = user.id;
 
-    [athlete, scanEntries, strengthSets] = await Promise.all([
+    [athlete, scanEntries, strengthSets, checkin] = await Promise.all([
       fetchAthleteSection(admin, userId),
       fetchManualScanEntries(admin, userId),
       fetchStrengthSets(admin, userId),
+      fetchTodaysCheckin(admin, userId, todayLocal(tz)),
     ]);
     console.log(
-      `✓ Supabase: athlete profile, ${scanEntries.length} scan entries, ${strengthSets.length} logged sets`,
+      `✓ Supabase: athlete profile, ${scanEntries.length} scan entries, ${strengthSets.length} logged sets, checkin ${checkin.present ? "present" : "none"}`,
     );
   } else {
     console.log("⚠ No SUPABASE_URL/SUPABASE_SERVICE_ROLE_KEY — using Phase 0 sample athlete/scan/lifts.");
@@ -134,6 +137,7 @@ export async function buildSnapshot(): Promise<boolean> {
     bodyComp,
     fueling: { trainingBurnKcal: 700, deficitKcal: 500 },
     strengthSets,
+    checkin,
   });
 
   const readiness = scoreReadiness(snapshot);

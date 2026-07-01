@@ -1,4 +1,5 @@
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { useRouter } from "expo-router";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
 import { useLatestSnapshot } from "@/lib/snapshot";
 import { color, font, radius, verdictColor } from "@/theme/tokens";
@@ -21,9 +22,11 @@ const VERDICT_LABEL: Record<string, string> = {
 };
 
 export default function TodayScreen() {
+  const router = useRouter();
   const { snapshot: s, readiness: r, isSample, loading } = useLatestSnapshot();
   const vColor = verdictColor[r.verdict];
   const e = s.endurance;
+  const checkin = s.checkin_today;
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
@@ -65,6 +68,28 @@ export default function TodayScreen() {
         <Text style={styles.rationale}>
           {r.factors.map((f) => f.detail).join(" · ")}. Hold intensity on the hard reps.
         </Text>
+
+        {/* subjective check-in */}
+        <Pressable style={styles.checkinRow} onPress={() => router.push("/checkin")}>
+          {checkin.present ? (
+            <>
+              <View style={[styles.dot, { backgroundColor: color.green }]} />
+              <Text style={styles.checkinText}>
+                Checked in · energy {checkin.energy}/5
+                {checkin.pain.length > 0
+                  ? ` · ${checkin.pain.map((p) => p.location.replace(/_/g, " ")).join(", ")}`
+                  : " · no pain"}
+              </Text>
+              <Text style={[styles.mono, { color: color.endure }]}>EDIT</Text>
+            </>
+          ) : (
+            <>
+              <View style={[styles.dot, { backgroundColor: color.ash }]} />
+              <Text style={styles.checkinText}>2-tap check-in · body + energy</Text>
+              <Text style={[styles.mono, { color: color.endure }]}>LOG →</Text>
+            </>
+          )}
+        </Pressable>
 
         {/* engines */}
         <View style={styles.engineRow}>
@@ -164,6 +189,20 @@ const styles = StyleSheet.create({
   fill: { height: 6, borderRadius: radius.pill },
 
   rationale: { fontFamily: font.ui, fontSize: 13.5, lineHeight: 20, color: color.fog, marginTop: 14, marginBottom: 20 },
+
+  checkinRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    backgroundColor: color.slate,
+    borderWidth: 1,
+    borderColor: color.line,
+    borderRadius: radius.sm,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    marginBottom: 16,
+  },
+  checkinText: { fontFamily: font.ui, fontSize: 12.5, color: color.fog, flex: 1 },
 
   engineRow: { flexDirection: "row", gap: 10, marginBottom: 16 },
   engineCard: {

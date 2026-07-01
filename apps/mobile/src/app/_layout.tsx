@@ -35,7 +35,9 @@ export default function RootLayout() {
           headerShown: false,
           contentStyle: { backgroundColor: color.void },
         }}
-      />
+      >
+        <Stack.Screen name="checkin" options={{ presentation: "modal" }} />
+      </Stack>
     </>
   );
 }

@@ -1,16 +1,25 @@
 /**
  * Fetches the latest athlete snapshot from Supabase (written by
- * scripts/build-snapshot.ts — the pragmatic stand-in for the planned edge function).
+ * scripts/build-snapshot.ts — the pragmatic stand-in for the planned edge function),
+ * then overlays today's check-in (if entered locally since) and recomputes the
+ * readiness verdict live.
  *
- * Only TYPES are imported from @crucible/core here, never runtime code: core's
- * internal modules use NodeNext ".js" specifiers pointing at co-located ".ts" files,
- * which Node/tsx resolve fine but Metro's bundler does not (it looks for the literal
- * ".js" file on disk). So the actual computation (snapshot assembly, readiness
- * scoring) always runs server-side; the app only ever displays already-computed data.
+ * Only TYPES are imported from most of @crucible/core here: core's internal modules
+ * mostly use NodeNext ".js" specifiers pointing at co-located ".ts" files, which
+ * Node/tsx resolve fine but Metro's bundler does not (it looks for the literal ".js"
+ * file on disk) — so full snapshot assembly always runs server-side. The one
+ * exception is `scoreReadiness`, imported via the `@core-direct/*` tsconfig alias
+ * (straight into core's src, bypassing both the barrel and the package's "exports"
+ * map — Metro has unstable_enablePackageExports disabled, see metro.config.js): that
+ * single file has no runtime cross-file imports, so it bundles safely and lets the
+ * check-in screen update the verdict instantly instead of waiting on the next
+ * server-side snapshot run.
  */
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import type { AthleteSnapshot, ReadinessResult } from "@crucible/core";
+import { scoreReadiness } from "@core-direct/verdict/score";
+import { useCheckinStore } from "@/lib/checkinStore";
 import { isSupabaseConfigured, supabase } from "@/lib/supabase";
 import { sampleReadiness, sampleSnapshot } from "@/data/sampleSnapshot";
 
@@ -40,14 +49,18 @@ async function fetchLatestSnapshot(): Promise<SnapshotPayload | null> {
   return data.payload as SnapshotPayload;
 }
 
-/** Latest live snapshot if Supabase is configured and a row exists; sample data otherwise. */
+/**
+ * Latest live snapshot if Supabase is configured and a row exists (sample data
+ * otherwise), with today's check-in overlaid and the verdict recomputed live.
+ */
 export function useLatestSnapshot(): SnapshotState {
-  const [state, setState] = useState<SnapshotState>({
+  const [base, setBase] = useState<{ snapshot: AthleteSnapshot; readiness: ReadinessResult }>({
     snapshot: sampleSnapshot,
     readiness: sampleReadiness,
-    loading: isSupabaseConfigured,
-    isSample: true,
   });
+  const [loading, setLoading] = useState(isSupabaseConfigured);
+  const [isSample, setIsSample] = useState(true);
+  const todaysCheckin = useCheckinStore((s) => s.todaysCheckin);
 
   useEffect(() => {
     if (!isSupabaseConfigured) return;
@@ -58,10 +71,10 @@ export function useLatestSnapshot(): SnapshotState {
         if (cancelled) return;
         if (payload) {
           const { readiness, ...snapshot } = payload;
-          setState({ snapshot, readiness, loading: false, isSample: false });
-        } else {
-          setState((s) => ({ ...s, loading: false }));
+          setBase({ snapshot, readiness });
+          setIsSample(false);
         }
+        setLoading(false);
       });
     };
 
@@ -81,5 +94,16 @@ export function useLatestSnapshot(): SnapshotState {
     };
   }, []);
 
-  return state;
+  return useMemo(() => {
+    if (!todaysCheckin) return { snapshot: base.snapshot, readiness: base.readiness, loading, isSample };
+
+    const snapshot: AthleteSnapshot = { ...base.snapshot, checkin_today: todaysCheckin };
+    const readiness = scoreReadiness({
+      endurance: snapshot.endurance,
+      strength: snapshot.strength,
+      checkin_today: snapshot.checkin_today,
+      athlete: snapshot.athlete,
+    });
+    return { snapshot, readiness, loading, isSample };
+  }, [base, todaysCheckin, loading, isSample]);
 }

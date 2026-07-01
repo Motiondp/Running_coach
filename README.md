@@ -104,10 +104,22 @@ says so in the top bar (`· SAMPLE`).
    manually triggered instead of cron-scheduled. Swapping it for a real edge function
    later is a deployment change, not a logic change.
 
-The app never runs `@crucible/core` at runtime itself — only its TYPES are imported
-into the RN bundle (core's internal NodeNext ".js" specifiers resolve fine under
-Node/tsx but not under Metro's bundler). All computation happens server-side in step 5;
-the app just displays the resulting JSON.
+The app never runs `@crucible/core` at runtime itself for the bulk of the logic — only
+TYPES are imported into the RN bundle (core's internal NodeNext ".js" specifiers resolve
+fine under Node/tsx but not under Metro's bundler, and Metro here has
+`unstable_enablePackageExports` disabled — see metro.config.js — so package.json subpath
+exports don't help either). All snapshot assembly happens server-side in step 5; the app
+just displays the resulting JSON.
+
+**One deliberate exception:** `scoreReadiness` (`packages/core/src/verdict/score.ts`) and
+`todayLocal` (`packages/core/src/dates/localDate.ts`) have zero runtime imports of their
+own, so they're safe to bundle directly. The app reaches them via a `@core-direct/*`
+tsconfig path alias straight into `packages/core/src` (`apps/mobile/tsconfig.json`),
+bypassing both the barrel files and the package's `exports` map. This is what lets the
+**subjective check-in** (`/checkin`) recompute the Green/Amber/Red verdict *instantly*
+on-device the moment you tap save, rather than waiting on the next `build:snapshot` run —
+while the check-in is still durably written to Supabase's `checkin` table so the next
+server-side run picks it up too.
 
 ## Design notes baked into the spine
 
