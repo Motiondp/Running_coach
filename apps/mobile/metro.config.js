@@ -15,4 +15,10 @@ config.resolver.nodeModulesPaths = [
 ];
 config.resolver.disableHierarchicalLookup = true;
 
+// @supabase/auth-js (a supabase-js dependency) has no "exports" map, only "main"/
+// "module" fields. Metro's package-exports resolver mis-picks "module" here and
+// fails since it isn't in resolverMainFields — disabling it falls back to plain
+// main-field resolution, which works. Documented Supabase/Expo compatibility fix.
+config.resolver.unstable_enablePackageExports = false;
+
 module.exports = config;

@@ -6,9 +6,9 @@ training/recovery/body/nutrition data in automatically, captures the two signals
 machines can't see (subjective readiness + pain), and resolves **both load engines into
 one daily Green/Amber/Red verdict**.
 
-> Status: **Phase 0 — proving the data spine.** No app UI yet, by design (see the plan
-> in `.claude/plans/`). Phases 1–4 build the daily loop, lift logger, plan engine, body
-> comp, and polish on top of this verified spine.
+> Status: **Phase 0 done** (spine verified against real intervals.icu). **Phase 1 in
+> progress**: the Expo app runs (`npm run mobile`) with a Today/cockpit screen, and the
+> Supabase schema + seed script are in place. See the plan in `.claude/plans/`.
 
 ## Layout
 
@@ -16,9 +16,11 @@ one daily Green/Amber/Red verdict**.
 packages/core/   Pure-TS, framework-free, fully tested. THE shared logic:
                  dates (NZ bucketing), snapshot contract, intervals.icu client,
                  Technogym parser, bodycomp insights, strength model, verdict.
-scripts/         Phase 0 verification scripts (run against real intervals.icu + fixtures).
+scripts/         Phase 0 verification scripts + scripts/db-seed.ts (Supabase seed).
 fixtures/        Synthetic Technogym export, modelled on the real panel.
 artifacts/       Generated snapshot.json (gitignored).
+apps/mobile/     Expo app (web-first, native later). Today screen + design tokens.
+supabase/        migrations/0001_init.sql — RLS-ready schema, single seeded user.
 ```
 
 `packages/core` has no React Native or Deno dependencies on purpose: the Phase 0
@@ -67,6 +69,35 @@ intervals.icu in a **browser** → Settings (bottom of the page) → **Developer
 > returns usable data.
 
 See the full plan and assumptions in `.claude/plans/`.
+
+## Running the app
+
+```bash
+npm run mobile   # starts Expo web at http://localhost:8081
+```
+
+Best viewed narrow (F12 → device toolbar, ~400px width) — the design is phone-first.
+Right now it renders a sample snapshot seeded with real Phase 0 intervals.icu data; wiring
+it to live Supabase data is the next step (see below).
+
+## Supabase setup
+
+1. `supabase/migrations/0001_init.sql` — apply via the Supabase SQL editor (or
+   `supabase db push` with the CLI). Creates the RLS-ready schema: one `athlete` profile
+   row per user, plus activity/daily_metrics/checkin/exercise/routine/lift_session/
+   set_log/strength_state/body_scan/nutrition/plan_session/athlete_snapshot/coach_message —
+   all restricted to `auth.uid() = user_id`.
+2. Add to `.env` (repo root): `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` (Project
+   Settings → API — service_role is admin-only, never ships to the app).
+3. `npm run db:seed` (in `scripts/`) — creates the one seeded auth user + athlete
+   profile + starter exercises. Single-user for now, but RLS is real (a genuine
+   `auth.uid()`), so the app can grow to multi-user later with zero migration.
+4. Add to `apps/mobile/.env` (a separate file — Expo loads env from the app root, not
+   the monorepo root): `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_ANON_KEY`.
+   The app auto signs in as the seeded user on launch (no login screen yet).
+
+Still open: the edge function that runs `@crucible/core`'s intervals.icu pull + snapshot
+assembly server-side, so the app reads live data instead of the bundled sample.
 
 ## Design notes baked into the spine
 

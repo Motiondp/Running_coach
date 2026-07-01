@@ -8,10 +8,12 @@
     "verify": "tsx verify.ts",
     "verify:intervals": "tsx verify-intervals.ts",
     "parse:technogym": "tsx parse-technogym.ts",
-    "build:snapshot": "tsx build-snapshot.ts"
+    "build:snapshot": "tsx build-snapshot.ts",
+    "db:seed": "tsx db-seed.ts"
   },
   "dependencies": {
     "@crucible/core": "*",
+    "@supabase/supabase-js": "^2.47.10",
     "fflate": "^0.8.2"
   },
   "devDependencies": {
