@@ -76,7 +76,7 @@ Deno.serve(async (req: Request) => {
 
     const result = await callGemini({
       apiKey: geminiKey,
-      model: Deno.env.get("GEMINI_MODEL") ?? "gemini-2.5-flash",
+      model: Deno.env.get("GEMINI_MODEL") ?? "gemini-3.5-flash",
       systemPrompt: buildSystemPrompt(snapshotRow.payload as Record<string, unknown>),
       history,
       userMessage: message,
