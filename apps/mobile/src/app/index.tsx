@@ -113,16 +113,34 @@ export default function TodayScreen() {
             </Text>
           </View>
 
-          <View style={[styles.engineCard, { borderTopColor: color.strength }]}>
+          <Pressable
+            style={[styles.engineCard, { borderTopColor: color.strength }]}
+            onPress={() => router.push("/lift")}
+          >
             <View style={styles.cardHead}>
               <Text style={[styles.cardLabel, { color: color.strength }]}>STRENGTH</Text>
-              <Text style={[styles.pill, { color: color.ash }]}>IDLE</Text>
+              <Text style={[styles.pill, { color: color.ash }]}>
+                {s.strength.per_group.length > 0 ? "SYNCED" : "IDLE"}
+              </Text>
             </View>
-            <View style={styles.emptyEngine}>
-              <Text style={styles.emptyText}>No lifts logged yet</Text>
-              <Text style={[styles.mono, { color: color.strength, fontSize: 10 }]}>OPEN LOGGER →</Text>
-            </View>
-          </View>
+            {s.strength.per_group.length > 0 ? (
+              <>
+                <View style={styles.statRow}>
+                  {s.strength.per_group.slice(0, 3).map((g) => (
+                    <Stat key={g.group} value={signed(g.freshness)} label={g.group.slice(0, 6).toUpperCase()} valueColor={color.strength} />
+                  ))}
+                </View>
+                <Text style={[styles.mono, { color: color.strength, fontSize: 10, marginTop: 11 }]}>
+                  LOG A SESSION →
+                </Text>
+              </>
+            ) : (
+              <View style={styles.emptyEngine}>
+                <Text style={styles.emptyText}>No lifts logged yet</Text>
+                <Text style={[styles.mono, { color: color.strength, fontSize: 10 }]}>OPEN LOGGER →</Text>
+              </View>
+            )}
+          </Pressable>
         </View>
 
         {/* recent */}

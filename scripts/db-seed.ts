@@ -92,6 +92,54 @@ async function main(): Promise<void> {
     console.log("✓ Starter exercises already present");
   }
 
+  // 4. Starter routines so the lift logger has something to open. References
+  // exercises by id — re-fetch now that inserts above are guaranteed present.
+  const { data: allExercises, error: allExErr } = await admin
+    .from("exercise")
+    .select("id, name")
+    .eq("user_id", userId);
+  if (allExErr) throw allExErr;
+  const exerciseId = (name: string): string => {
+    const found = allExercises?.find((e) => e.name === name);
+    if (!found) throw new Error(`Seed routine references unknown exercise "${name}"`);
+    return found.id;
+  };
+
+  const routines = [
+    {
+      name: "Push A",
+      exercises: [
+        { exercise_id: exerciseId("Bench Press"), target_sets: 4, target_reps: 8 },
+        { exercise_id: exerciseId("Overhead Press"), target_sets: 3, target_reps: 10 },
+      ],
+    },
+    {
+      name: "Pull B",
+      exercises: [
+        { exercise_id: exerciseId("Deadlift"), target_sets: 3, target_reps: 5 },
+        { exercise_id: exerciseId("Pull-up"), target_sets: 4, target_reps: 8 },
+      ],
+    },
+    {
+      name: "Legs",
+      exercises: [{ exercise_id: exerciseId("Back Squat"), target_sets: 4, target_reps: 5 }],
+    },
+  ];
+
+  const { data: existingRoutines } = await admin.from("routine").select("name").eq("user_id", userId);
+  const haveRoutineNames = new Set((existingRoutines ?? []).map((r) => r.name));
+  const routinesToInsert = routines
+    .filter((r) => !haveRoutineNames.has(r.name))
+    .map((r) => ({ ...r, user_id: userId }));
+
+  if (routinesToInsert.length > 0) {
+    const { error: routineErr } = await admin.from("routine").insert(routinesToInsert);
+    if (routineErr) throw routineErr;
+    console.log(`✓ Seeded ${routinesToInsert.length} starter routine(s)`);
+  } else {
+    console.log("✓ Starter routines already present");
+  }
+
   console.log("\n✓ Seed complete.");
   console.log(
     `  App sign-in (dev-only, until Phase 1's real auth): ${SEED_EMAIL} / ${SEED_PASSWORD}`,

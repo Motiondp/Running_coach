@@ -7,8 +7,9 @@ machines can't see (subjective readiness + pain), and resolves **both load engin
 one daily Green/Amber/Red verdict**.
 
 > Status: **Phase 0 done** (spine verified against real intervals.icu). **Phase 1 in
-> progress**: the Expo app runs (`npm run mobile`) and its Today screen reads a real,
-> Supabase-stored snapshot end-to-end. See the plan in `.claude/plans/`.
+> progress**: the Expo app runs (`npm run mobile`) with a live Today screen, a
+> subjective check-in, and an in-app lift logger, all backed by Supabase. See the plan
+> in `.claude/plans/`.
 
 ## Layout
 
@@ -120,6 +121,19 @@ bypassing both the barrel files and the package's `exports` map. This is what le
 on-device the moment you tap save, rather than waiting on the next `build:snapshot` run —
 while the check-in is still durably written to Supabase's `checkin` table so the next
 server-side run picks it up too.
+
+## What's in the app right now
+
+- **Today** (`/`) — the verdict, both engine cards, recent runs, and entry points into
+  the check-in and lift logger.
+- **Check-in** (`/checkin`, modal) — tap what hurts + a severity stepper, pick an energy
+  level (1–5). Saves to Supabase and updates the verdict instantly (see above).
+- **Lift logger** (`/lift` → `/lift/session`) — pick a routine (`Push A` / `Pull B` /
+  `Legs`, seeded by `db:seed`), log each set's weight/reps/RPE (auto-filled from your
+  last session for that exercise), a 90s rest-timer chip after each logged set, and a
+  finish button that closes out the session. Strength numbers on the Today screen update
+  on the next `build:snapshot` run (the EWMA model needs the full lift history, so unlike
+  the check-in it isn't safe to recompute on-device — see the architecture note above).
 
 ## Design notes baked into the spine
 
