@@ -129,6 +129,19 @@ export async function buildSnapshot(): Promise<boolean> {
 
   const bodyComp = bodyCompFromManualEntry(scanEntries);
 
+  // athlete.bodycomp_target only carries the athlete-set TARGET (from onboarding); the
+  // CURRENT side of that pair comes from the latest actual scan, not the profile row.
+  if (athlete.bodycomp_target) {
+    athlete = {
+      ...athlete,
+      bodycomp_target: {
+        weight: { ...athlete.bodycomp_target.weight, current: bodyComp.metrics.weight?.value ?? 0 },
+        fat_pct: { ...athlete.bodycomp_target.fat_pct, current: bodyComp.metrics.fat_pct?.value ?? 0 },
+        muscle: { ...athlete.bodycomp_target.muscle, current: bodyComp.metrics.muscle?.value ?? 0 },
+      },
+    };
+  }
+
   const snapshot = assembleSnapshot({
     tz,
     athlete,

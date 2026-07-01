@@ -85,11 +85,13 @@ says so in the top bar (`· SAMPLE`).
 
 ## Supabase setup
 
-1. `supabase/migrations/0001_init.sql` — apply via the Supabase SQL editor (or
-   `supabase db push` with the CLI). Creates the RLS-ready schema: one `athlete` profile
-   row per user, plus activity/daily_metrics/checkin/exercise/routine/lift_session/
-   set_log/strength_state/body_scan/nutrition/plan_session/athlete_snapshot/coach_message —
-   all restricted to `auth.uid() = user_id`.
+1. `supabase/migrations/*.sql` — apply via `supabase link --project-ref <ref>` then
+   `supabase db push --linked` (or paste each into the SQL editor manually). Creates the
+   RLS-ready schema: one `athlete` profile row per user, plus activity/daily_metrics/
+   checkin/exercise/routine/lift_session/set_log/strength_state/body_scan/nutrition/
+   plan_session/athlete_snapshot/coach_message — all restricted to `auth.uid() = user_id`
+   (0001), explicit grants some Supabase projects need for raw-SQL-created tables (0002),
+   and the athlete `age` column the onboarding screen collects (0003).
 2. Add to `.env` (repo root): `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` (Project
    Settings → API — service_role is admin-only, never ships to the app).
 3. `npm run db:seed` (in `scripts/`) — creates the one seeded auth user + athlete
@@ -125,8 +127,14 @@ server-side run picks it up too.
 
 ## What's in the app right now
 
+- **Onboarding** (`/onboarding`) — age, priority (fat loss / muscle / race), race goal
+  (name, distance, date, target time), and body-comp targets (weight/fat%/muscle).
+  Gates the Today screen on first run (checked via `age` being unset) and doubles as
+  the "edit goals anytime" screen — tap the race pill (or "SET GOALS") on Today to
+  reopen it. This replaces what used to be hardcoded sample data in `build-snapshot.ts`;
+  your real goals now come from what you enter here.
 - **Today** (`/`) — the verdict, both engine cards, recent runs, and entry points into
-  the check-in and lift logger.
+  the check-in, lift logger, coach, and body scan.
 - **Check-in** (`/checkin`, modal) — tap what hurts + a severity stepper, pick an energy
   level (1–5). Saves to Supabase and updates the verdict instantly (see above).
 - **Lift logger** (`/lift` → `/lift/session`) — pick a routine (`Push A` / `Pull B` /
@@ -144,6 +152,16 @@ server-side run picks it up too.
   (currently only `gemini` is implemented) and `GEMINI_MODEL` are function secrets, not
   app config — swapping providers later only touches
   `supabase/functions/coach/providers/`.
+- **Scan capture** (`/scan`) — ported layout from the `crucible-scan-capture.html`
+  prototype: a "Log scan" / "What it computes" tab switcher, the core-four tiles
+  (weight, body fat, muscle, BMR) each showing the previous value + date and an
+  editable per-field date, and an expandable full panel (FFM, visceral fat, total
+  body water, bone mass, ICW, ECW, BMI). Manual entry only, no export — see the body
+  composition design decision below. "What it computes" shows the real derived
+  numbers (fueling target, ECW:TBW, recomp) from your live snapshot instead of
+  prototype placeholders, with an honest empty state per card until there's enough
+  data. Saving derives a `fat_mass` row from weight × fat% automatically (the layout
+  only asks for body fat %, but the recomp insight needs fat_mass explicitly).
 
 ### Deploying/updating the coach function
 

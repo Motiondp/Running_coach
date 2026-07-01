@@ -1,6 +1,8 @@
 import { useRouter } from "expo-router";
+import { useEffect } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
+import { useNeedsOnboarding } from "@/lib/onboarding";
 import { useLatestSnapshot } from "@/lib/snapshot";
 import { color, font, radius, verdictColor } from "@/theme/tokens";
 
@@ -23,10 +25,23 @@ const VERDICT_LABEL: Record<string, string> = {
 
 export default function TodayScreen() {
   const router = useRouter();
+  const { checking, needsOnboarding } = useNeedsOnboarding();
   const { snapshot: s, readiness: r, isSample, loading } = useLatestSnapshot();
   const vColor = verdictColor[r.verdict];
   const e = s.endurance;
   const checkin = s.checkin_today;
+
+  useEffect(() => {
+    if (!checking && needsOnboarding) router.replace("/onboarding");
+  }, [checking, needsOnboarding]);
+
+  if (checking || needsOnboarding) {
+    return (
+      <View style={[styles.screen, { justifyContent: "center", alignItems: "center" }]}>
+        <Text style={styles.mono}>LOADING…</Text>
+      </View>
+    );
+  }
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
@@ -37,11 +52,15 @@ export default function TodayScreen() {
             TODAY · {shortDate(s.local_date).toUpperCase()}
             {loading ? " · SYNCING…" : isSample ? " · SAMPLE" : ""}
           </Text>
-          {s.athlete.goal_race ? (
-            <Text style={[styles.mono, { color: color.endure }]}>
-              {s.athlete.goal_race.name.toUpperCase()} · {s.athlete.goal_race.days_out}D
-            </Text>
-          ) : null}
+          <Pressable onPress={() => router.push("/onboarding")}>
+            {s.athlete.goal_race ? (
+              <Text style={[styles.mono, { color: color.endure }]}>
+                {s.athlete.goal_race.name.toUpperCase()} · {s.athlete.goal_race.days_out}D
+              </Text>
+            ) : (
+              <Text style={[styles.mono, { color: color.endure }]}>SET GOALS →</Text>
+            )}
+          </Pressable>
         </View>
 
         {/* hero verdict */}
@@ -96,6 +115,17 @@ export default function TodayScreen() {
           <View style={[styles.dot, { backgroundColor: color.strength }]} />
           <Text style={styles.checkinText}>Discuss or adjust today's plan</Text>
           <Text style={[styles.mono, { color: color.strength }]}>COACH →</Text>
+        </Pressable>
+
+        {/* body scan */}
+        <Pressable style={styles.checkinRow} onPress={() => router.push("/scan")}>
+          <View style={[styles.dot, { backgroundColor: color.amber }]} />
+          <Text style={styles.checkinText}>
+            {s.bodycomp.weight
+              ? `Last scan: ${s.bodycomp.weight.value}kg · ${s.bodycomp.weight.date}`
+              : "Log your quarterly body scan"}
+          </Text>
+          <Text style={[styles.mono, { color: color.amber }]}>SCAN →</Text>
         </Pressable>
 
         {/* engines */}
