@@ -1,0 +1,41 @@
+name: Refresh athlete snapshot
+
+# Runs scripts/build-snapshot.ts on a schedule — pulls intervals.icu, reassembles the
+# snapshot + deterministic readiness verdict, and writes it to Supabase, so the Today
+# screen has fresh training data every morning without anyone manually running the
+# script. This is the same script + logic already used and tested locally; nothing
+# new is running here that hasn't already been verified.
+#
+# Only two values are genuinely sensitive (set as repo secrets, see below); athlete id,
+# Supabase project URL, timezone, and lookback window are already public (the app
+# bundle itself ships the Supabase URL), so they're hardcoded below rather than
+# requiring extra secrets to be configured.
+
+on:
+  schedule:
+    # 17:00 UTC ≈ 5am NZST (winter) / 6am NZDT (summer) — cron has no DST awareness,
+    # so this drifts an hour twice a year at the DST transitions. Not worth a second
+    # cron entry for a single-athlete morning refresh.
+    - cron: "0 17 * * *"
+  workflow_dispatch: {} # lets you trigger a refresh on demand from the Actions tab
+
+jobs:
+  build-snapshot:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - run: npm install
+
+      - run: npm run build:snapshot --workspace scripts
+        env:
+          INTERVALS_API_KEY: ${{ secrets.INTERVALS_API_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          INTERVALS_ATHLETE_ID: i416554
+          INTERVALS_LOOKBACK_DAYS: "30"
+          ATHLETE_TZ: "Pacific/Auckland"
+          SUPABASE_URL: "https://lbjmsdnaiobsplunpfon.supabase.co"

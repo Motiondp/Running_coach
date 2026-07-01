@@ -109,9 +109,15 @@ says so in the top bar (`· SAMPLE`).
    athlete profile/logged lifts/body scans from Supabase, assembles the snapshot +
    deterministic readiness verdict via `@crucible/core`, and writes it as a new
    `athlete_snapshot` row. This is the pragmatic stand-in for the planned scheduled
-   Deno edge function (Docker/CLI-linking friction on Windows) — same core logic,
-   manually triggered instead of cron-scheduled. Swapping it for a real edge function
-   later is a deployment change, not a logic change.
+   Deno edge function (Docker/CLI-linking friction on Windows) — same core logic.
+   **Now runs on a schedule automatically** via `.github/workflows/refresh-snapshot.yml`
+   (GitHub Actions, ~5am NZ time daily, plus `workflow_dispatch` for an on-demand run
+   from the repo's Actions tab) — no need to trigger it by hand day to day. Needs two
+   repo secrets set once: `INTERVALS_API_KEY` and `SUPABASE_SERVICE_ROLE_KEY` (Settings
+   → Secrets and variables → Actions → New repository secret). Everything else the
+   workflow needs (athlete id, Supabase URL, timezone) is hardcoded in the workflow
+   file since none of it is actually sensitive. Swapping this for a real Supabase Edge
+   Function later is a deployment change, not a logic change.
 
 The app never runs `@crucible/core` at runtime itself for the bulk of the logic — only
 TYPES are imported into the RN bundle (core's internal NodeNext ".js" specifiers resolve
