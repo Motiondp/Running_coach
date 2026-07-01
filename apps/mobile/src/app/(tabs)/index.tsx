@@ -2,6 +2,7 @@ import { useRouter } from "expo-router";
 import { useEffect } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
+import { todayLocal } from "@core-direct/dates/localDate";
 import { useSession } from "@/lib/auth";
 import { useNeedsOnboarding } from "@/lib/onboarding";
 import { useLatestSnapshot } from "@/lib/snapshot";
@@ -57,7 +58,7 @@ export default function TodayScreen() {
         {/* top bar */}
         <View style={styles.topbar}>
           <Text style={styles.mono}>
-            TODAY · {shortDate(s.local_date).toUpperCase()}
+            TODAY · {shortDate(todayLocal("Pacific/Auckland")).toUpperCase()}
             {loading ? " · SYNCING…" : isSample ? " · SAMPLE" : ""}
           </Text>
           <Pressable onPress={() => router.push("/onboarding")}>

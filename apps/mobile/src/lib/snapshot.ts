@@ -18,7 +18,7 @@
 import { useEffect, useMemo, useState } from "react";
 
 import type { AthleteSnapshot, ReadinessResult } from "@crucible/core";
-import { daysBetween } from "@core-direct/dates/localDate";
+import { daysBetween, todayLocal } from "@core-direct/dates/localDate";
 import { scoreReadiness } from "@core-direct/verdict/score";
 import { useAthleteProfile } from "@/lib/athleteProfile";
 import { useCheckinStore } from "@/lib/checkinStore";
@@ -98,6 +98,10 @@ export function useLatestSnapshot(): SnapshotState {
   }, []);
 
   return useMemo(() => {
+    // The race countdown must count from ACTUAL today, not the cached snapshot's build
+    // date — otherwise it drifts by however many days old the snapshot is.
+    const today = todayLocal("Pacific/Auckland");
+
     // Overlay the live athlete profile (goal race, priority, body-comp targets) on top
     // of whatever the cached snapshot has — these are plain profile fields with no
     // computation involved, so they shouldn't wait on the next build:snapshot run the
@@ -108,7 +112,7 @@ export function useLatestSnapshot(): SnapshotState {
         ...athlete,
         priority: liveProfile.priority,
         goal_race: liveProfile.goal_race
-          ? { ...liveProfile.goal_race, days_out: daysBetween(base.snapshot.local_date, liveProfile.goal_race.date) }
+          ? { ...liveProfile.goal_race, days_out: daysBetween(today, liveProfile.goal_race.date) }
           : null,
         bodycomp_target: liveProfile.bodycomp_target
           ? {
@@ -117,6 +121,12 @@ export function useLatestSnapshot(): SnapshotState {
               muscle: { current: athlete.bodycomp_target?.muscle.current ?? 0, target: liveProfile.bodycomp_target.muscle.target },
             }
           : athlete.bodycomp_target,
+      };
+    } else if (athlete.goal_race) {
+      // Profile not loaded yet (or unconfigured): still refresh the countdown against today.
+      athlete = {
+        ...athlete,
+        goal_race: { ...athlete.goal_race, days_out: daysBetween(today, athlete.goal_race.date) },
       };
     }
 
