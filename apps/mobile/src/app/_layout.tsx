@@ -1,9 +1,7 @@
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { useEffect } from "react";
 import { Platform } from "react-native";
 
-import { signInSeedUser } from "@/lib/supabase";
 import { color } from "@/theme/tokens";
 
 // Web-first: load the Crucible typefaces from Google Fonts and paint the page void.
@@ -22,11 +20,6 @@ if (Platform.OS === "web" && typeof document !== "undefined") {
 }
 
 export default function RootLayout() {
-  useEffect(() => {
-    // No-op until EXPO_PUBLIC_SUPABASE_URL/ANON_KEY are set — see lib/supabase.ts.
-    void signInSeedUser();
-  }, []);
-
   return (
     <>
       <StatusBar style="light" />

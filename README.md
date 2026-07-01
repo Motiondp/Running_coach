@@ -96,10 +96,15 @@ says so in the top bar (`· SAMPLE`).
    Settings → API — service_role is admin-only, never ships to the app).
 3. `npm run db:seed` (in `scripts/`) — creates the one seeded auth user + athlete
    profile + starter exercises. Single-user for now, but RLS is real (a genuine
-   `auth.uid()`), so the app can grow to multi-user later with zero migration.
+   `auth.uid()`), so the app can grow to multi-user later with zero migration. On first
+   creation it generates a random password and prints it **once** to the console (never
+   written to any file) — note it down, you'll need it for `/login`.
 4. Add to `apps/mobile/.env` (a separate file — Expo loads env from the app root, not
    the monorepo root): `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_ANON_KEY`.
-   The app auto signs in as the seeded user on launch (no login screen yet).
+   Sign in with the printed credentials at `/login`. There is no hardcoded/auto sign-in —
+   an earlier version of this app did that for local-dev convenience, but any credential
+   baked into client code ships straight into the public JS bundle the moment the app is
+   deployed anywhere reachable, so it was replaced with this real login screen.
 5. `npm run build:snapshot --workspace scripts` — pulls intervals.icu, reads the
    athlete profile/logged lifts/body scans from Supabase, assembles the snapshot +
    deterministic readiness verdict via `@crucible/core`, and writes it as a new

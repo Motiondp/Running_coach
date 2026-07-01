@@ -2,8 +2,10 @@ import { useRouter } from "expo-router";
 import { useEffect } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
+import { useSession } from "@/lib/auth";
 import { useNeedsOnboarding } from "@/lib/onboarding";
 import { useLatestSnapshot } from "@/lib/snapshot";
+import { supabase } from "@/lib/supabase";
 import { color, font, radius, verdictColor } from "@/theme/tokens";
 
 const MONTHS = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
@@ -25,17 +27,23 @@ const VERDICT_LABEL: Record<string, string> = {
 
 export default function TodayScreen() {
   const router = useRouter();
-  const { checking, needsOnboarding } = useNeedsOnboarding();
+  const { checking: authChecking, signedIn } = useSession();
+  const { checking: onboardingChecking, needsOnboarding } = useNeedsOnboarding();
   const { snapshot: s, readiness: r, isSample, loading } = useLatestSnapshot();
   const vColor = verdictColor[r.verdict];
   const e = s.endurance;
   const checkin = s.checkin_today;
 
   useEffect(() => {
-    if (!checking && needsOnboarding) router.replace("/onboarding");
-  }, [checking, needsOnboarding]);
+    if (authChecking) return;
+    if (!signedIn) {
+      router.replace("/login");
+      return;
+    }
+    if (!onboardingChecking && needsOnboarding) router.replace("/onboarding");
+  }, [authChecking, signedIn, onboardingChecking, needsOnboarding]);
 
-  if (checking || needsOnboarding) {
+  if (authChecking || !signedIn || onboardingChecking || needsOnboarding) {
     return (
       <View style={[styles.screen, { justifyContent: "center", alignItems: "center" }]}>
         <Text style={styles.mono}>LOADING…</Text>
@@ -209,6 +217,15 @@ export default function TodayScreen() {
             : "Endurance is live from your intervals.icu via Supabase."}{" "}
           Strength, body comp and today&apos;s session arrive as we build Phase 1–2.
         </Text>
+
+        <Pressable
+          onPress={async () => {
+            await supabase.auth.signOut();
+            router.replace("/login");
+          }}
+        >
+          <Text style={[styles.mono, { marginTop: 14 }]}>SIGN OUT</Text>
+        </Pressable>
       </View>
     </ScrollView>
   );

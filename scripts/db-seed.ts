@@ -7,19 +7,18 @@
  * is admin-only, never ships to the app, and must stay out of git (it's covered by
  * the existing .env gitignore rule).
  *
- * "RLS-ready, no login UI" means there is still one REAL Supabase auth user (so
- * auth.uid() and row-level security are genuine, not faked) — the app just signs in
- * as that user automatically instead of showing a login screen. This script creates
- * that user if missing, then seeds the athlete profile + a starter routine so the
- * Phase 1 lift logger has something to select.
+ * "RLS-ready, no login UI (initially)" means there is one REAL Supabase auth user (so
+ * auth.uid() and row-level security are genuine, not faked). The app now has a real
+ * login screen (apps/mobile/src/app/login.tsx) — this script only ever CREATES the
+ * account; it never hardcodes or re-sets a password. On first run it generates a
+ * random one and prints it ONCE to the console (never written to a file) — note it
+ * down or change it via `supabase.auth.admin.updateUserById` / the dashboard.
  */
+import { randomBytes } from "node:crypto";
 import { createClient } from "@supabase/supabase-js";
 import { env, isMain } from "./lib/env.js";
 
 const SEED_EMAIL = "dan@motiondp.com";
-// Dev-only seed password for the single athlete account. Not a secret worth protecting
-// beyond .env — there is no other user, and the account has no payment/PII surface yet.
-const SEED_PASSWORD = "ROTATED-REDACTED-PASSWORD";
 
 async function main(): Promise<void> {
   const url = env("SUPABASE_URL");
@@ -33,14 +32,16 @@ async function main(): Promise<void> {
 
   // 1. Find or create the single athlete auth user.
   let userId: string | undefined;
+  let generatedPassword: string | undefined;
   const { data: existing, error: listErr } = await admin.auth.admin.listUsers();
   if (listErr) throw listErr;
   userId = existing.users.find((u) => u.email === SEED_EMAIL)?.id;
 
   if (!userId) {
+    generatedPassword = randomBytes(18).toString("base64url");
     const { data, error } = await admin.auth.admin.createUser({
       email: SEED_EMAIL,
-      password: SEED_PASSWORD,
+      password: generatedPassword,
       email_confirm: true,
     });
     if (error) throw error;
@@ -141,9 +142,12 @@ async function main(): Promise<void> {
   }
 
   console.log("\n✓ Seed complete.");
-  console.log(
-    `  App sign-in (dev-only, until Phase 1's real auth): ${SEED_EMAIL} / ${SEED_PASSWORD}`,
-  );
+  if (generatedPassword) {
+    console.log(
+      `\n  New account password (shown once, not saved anywhere) — ${SEED_EMAIL} / ${generatedPassword}`,
+    );
+    console.log("  Use this to sign in at /login. Change it via the Supabase dashboard if you'd like.");
+  }
 }
 
 if (isMain(import.meta.url)) {

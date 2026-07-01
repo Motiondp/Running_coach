@@ -1,11 +1,11 @@
 /**
- * Supabase client — single seeded user, real RLS, no login screen (yet).
+ * Supabase client — single seeded user, real RLS, real login screen.
  *
- * "RLS-ready, defer login" means there IS a real Supabase auth user (created by
- * scripts/db-seed.ts) so auth.uid() and row-level security are genuine — the app
- * just signs in as that user automatically instead of showing a login form. When
- * Phase 1+ adds real onboarding/auth, replace `signInSeedUser` with a proper flow;
- * nothing else changes since every table is already keyed on user_id.
+ * "RLS-ready" means there is one real Supabase auth user (created by
+ * scripts/db-seed.ts) so auth.uid() and row-level security are genuine, not faked.
+ * There used to be a hardcoded auto-sign-in here for local-only convenience; it was
+ * removed because the credential ends up in the public JS bundle the moment this app
+ * is deployed anywhere reachable — see apps/mobile/src/app/login.tsx instead.
  */
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { createClient } from "@supabase/supabase-js";
@@ -36,21 +36,3 @@ export const supabase = createClient(
   },
 );
 
-const SEED_EMAIL = "dan@motiondp.com";
-const SEED_PASSWORD = "ROTATED-REDACTED-PASSWORD";
-
-/** Signs in as the single seeded athlete if no session exists yet. No-op if unconfigured. */
-export async function signInSeedUser(): Promise<void> {
-  if (!isSupabaseConfigured) return;
-
-  const { data } = await supabase.auth.getSession();
-  if (data.session) return;
-
-  const { error } = await supabase.auth.signInWithPassword({
-    email: SEED_EMAIL,
-    password: SEED_PASSWORD,
-  });
-  if (error) {
-    console.warn("Crucible: seed sign-in failed —", error.message);
-  }
-}
