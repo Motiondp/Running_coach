@@ -1,0 +1,6 @@
+{
+  "buildCommand": "npm run build --workspace @crucible/mobile",
+  "outputDirectory": "apps/mobile/dist",
+  "installCommand": "npm install",
+  "cleanUrls": true
+}
