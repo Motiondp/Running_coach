@@ -137,7 +137,11 @@ server-side run picks it up too.
   Gates the Today screen on first run (checked via `age` being unset) and doubles as
   the "edit goals anytime" screen — tap the race pill (or "SET GOALS") on Today to
   reopen it. This replaces what used to be hardcoded sample data in `build-snapshot.ts`;
-  your real goals now come from what you enter here.
+  your real goals now come from what you enter here. Saves land immediately: Today
+  overlays your live `athlete` row (race/priority/targets — `lib/athleteProfile.ts`) on
+  top of the cached snapshot, the same instant-update pattern as the check-in, since
+  editing a goal needs no server-side computation and shouldn't wait on the next
+  `build:snapshot` run the way endurance/strength/body-comp readings legitimately do.
 - **Today** (`/`) — the verdict, both engine cards, recent runs, and entry points into
   the check-in, lift logger, coach, and body scan.
 - **Check-in** (`/checkin`, modal) — tap what hurts + a severity stepper, pick an energy

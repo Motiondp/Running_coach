@@ -18,7 +18,9 @@
 import { useEffect, useMemo, useState } from "react";
 
 import type { AthleteSnapshot, ReadinessResult } from "@crucible/core";
+import { daysBetween } from "@core-direct/dates/localDate";
 import { scoreReadiness } from "@core-direct/verdict/score";
+import { useAthleteProfile } from "@/lib/athleteProfile";
 import { useCheckinStore } from "@/lib/checkinStore";
 import { isSupabaseConfigured, supabase } from "@/lib/supabase";
 import { sampleReadiness, sampleSnapshot } from "@/data/sampleSnapshot";
@@ -61,6 +63,7 @@ export function useLatestSnapshot(): SnapshotState {
   const [loading, setLoading] = useState(isSupabaseConfigured);
   const [isSample, setIsSample] = useState(true);
   const todaysCheckin = useCheckinStore((s) => s.todaysCheckin);
+  const liveProfile = useAthleteProfile();
 
   useEffect(() => {
     if (!isSupabaseConfigured) return;
@@ -95,9 +98,34 @@ export function useLatestSnapshot(): SnapshotState {
   }, []);
 
   return useMemo(() => {
-    if (!todaysCheckin) return { snapshot: base.snapshot, readiness: base.readiness, loading, isSample };
+    // Overlay the live athlete profile (goal race, priority, body-comp targets) on top
+    // of whatever the cached snapshot has — these are plain profile fields with no
+    // computation involved, so they shouldn't wait on the next build:snapshot run the
+    // way endurance/strength/body-comp readings legitimately need to.
+    let athlete = base.snapshot.athlete;
+    if (liveProfile) {
+      athlete = {
+        ...athlete,
+        priority: liveProfile.priority,
+        goal_race: liveProfile.goal_race
+          ? { ...liveProfile.goal_race, days_out: daysBetween(base.snapshot.local_date, liveProfile.goal_race.date) }
+          : null,
+        bodycomp_target: liveProfile.bodycomp_target
+          ? {
+              weight: { current: athlete.bodycomp_target?.weight.current ?? 0, target: liveProfile.bodycomp_target.weight.target },
+              fat_pct: { current: athlete.bodycomp_target?.fat_pct.current ?? 0, target: liveProfile.bodycomp_target.fat_pct.target },
+              muscle: { current: athlete.bodycomp_target?.muscle.current ?? 0, target: liveProfile.bodycomp_target.muscle.target },
+            }
+          : athlete.bodycomp_target,
+      };
+    }
 
-    const snapshot: AthleteSnapshot = { ...base.snapshot, checkin_today: todaysCheckin };
+    if (!todaysCheckin) {
+      const snapshot: AthleteSnapshot = { ...base.snapshot, athlete };
+      return { snapshot, readiness: base.readiness, loading, isSample };
+    }
+
+    const snapshot: AthleteSnapshot = { ...base.snapshot, athlete, checkin_today: todaysCheckin };
     const readiness = scoreReadiness({
       endurance: snapshot.endurance,
       strength: snapshot.strength,
@@ -105,5 +133,5 @@ export function useLatestSnapshot(): SnapshotState {
       athlete: snapshot.athlete,
     });
     return { snapshot, readiness, loading, isSample };
-  }, [base, todaysCheckin, loading, isSample]);
+  }, [base, todaysCheckin, liveProfile, loading, isSample]);
 }
