@@ -91,6 +91,13 @@ export default function TodayScreen() {
           )}
         </Pressable>
 
+        {/* coach chat */}
+        <Pressable style={styles.checkinRow} onPress={() => router.push("/coach")}>
+          <View style={[styles.dot, { backgroundColor: color.strength }]} />
+          <Text style={styles.checkinText}>Discuss or adjust today's plan</Text>
+          <Text style={[styles.mono, { color: color.strength }]}>COACH →</Text>
+        </Pressable>
+
         {/* engines */}
         <View style={styles.engineRow}>
           <View style={[styles.engineCard, { borderTopColor: color.endure }]}>

@@ -6,10 +6,10 @@ training/recovery/body/nutrition data in automatically, captures the two signals
 machines can't see (subjective readiness + pain), and resolves **both load engines into
 one daily Green/Amber/Red verdict**.
 
-> Status: **Phase 0 done** (spine verified against real intervals.icu). **Phase 1 in
-> progress**: the Expo app runs (`npm run mobile`) with a live Today screen, a
-> subjective check-in, and an in-app lift logger, all backed by Supabase. See the plan
-> in `.claude/plans/`.
+> Status: **Phase 0 done** (spine verified against real intervals.icu). **Phase 1
+> done**: the Expo app (`npm run mobile`) has a live Today screen, a subjective
+> check-in, an in-app lift logger, and a Gemini-powered coach chat — deployed as a
+> real Supabase Edge Function. See the plan in `.claude/plans/`.
 
 ## Layout
 
@@ -20,8 +20,9 @@ packages/core/   Pure-TS, framework-free, fully tested. THE shared logic:
 scripts/         Phase 0 verification scripts + scripts/db-seed.ts (Supabase seed).
 fixtures/        Synthetic Technogym export, modelled on the real panel.
 artifacts/       Generated snapshot.json (gitignored).
-apps/mobile/     Expo app (web-first, native later). Today screen + design tokens.
-supabase/        migrations/0001_init.sql — RLS-ready schema, single seeded user.
+apps/mobile/     Expo app (web-first, native later). Today, check-in, lift logger, coach.
+supabase/        migrations/ — RLS-ready schema, single seeded user.
+                 functions/coach/ — the deployed Gemini coach edge function.
 ```
 
 `packages/core` has no React Native or Deno dependencies on purpose: the Phase 0
@@ -134,6 +135,25 @@ server-side run picks it up too.
   finish button that closes out the session. Strength numbers on the Today screen update
   on the next `build:snapshot` run (the EWMA model needs the full lift history, so unlike
   the check-in it isn't safe to recompute on-device — see the architecture note above).
+- **Coach** (`/coach`) — chat backed by a real, deployed Supabase Edge Function
+  (`supabase/functions/coach`), not a local script. Reads the latest `athlete_snapshot`
+  row (RLS-scoped to the caller via their forwarded JWT — the function never uses the
+  service-role key), calls Gemini with structured JSON output, and persists both turns
+  to `coach_message`. If the athlete describes a new injury, it's extracted via the
+  response schema and written to the `injury` table automatically. `COACH_PROVIDER`
+  (currently only `gemini` is implemented) and `GEMINI_MODEL` are function secrets, not
+  app config — swapping providers later only touches
+  `supabase/functions/coach/providers/`.
+
+### Deploying/updating the coach function
+
+```bash
+supabase link --project-ref <your-ref>                 # one-time
+supabase secrets set GEMINI_API_KEY=... GEMINI_MODEL=gemini-2.5-flash COACH_PROVIDER=gemini ATHLETE_TZ=Pacific/Auckland
+supabase functions deploy coach --use-api               # --use-api bundles server-side, no Docker needed
+```
+
+`--use-api` is what makes this possible without Docker Desktop (unlike `supabase functions serve`, which is only needed for local dev and does require Docker — we skip local serving entirely and deploy straight to the hosted platform).
 
 ## Design notes baked into the spine
 
