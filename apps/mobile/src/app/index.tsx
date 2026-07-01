@@ -1,6 +1,6 @@
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 
-import { sampleReadiness, sampleSnapshot } from "@/data/sampleSnapshot";
+import { useLatestSnapshot } from "@/lib/snapshot";
 import { color, font, radius, verdictColor } from "@/theme/tokens";
 
 const MONTHS = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
@@ -21,8 +21,7 @@ const VERDICT_LABEL: Record<string, string> = {
 };
 
 export default function TodayScreen() {
-  const s = sampleSnapshot;
-  const r = sampleReadiness;
+  const { snapshot: s, readiness: r, isSample, loading } = useLatestSnapshot();
   const vColor = verdictColor[r.verdict];
   const e = s.endurance;
 
@@ -31,7 +30,10 @@ export default function TodayScreen() {
       <View style={styles.col}>
         {/* top bar */}
         <View style={styles.topbar}>
-          <Text style={styles.mono}>TODAY · {shortDate(s.local_date).toUpperCase()}</Text>
+          <Text style={styles.mono}>
+            TODAY · {shortDate(s.local_date).toUpperCase()}
+            {loading ? " · SYNCING…" : isSample ? " · SAMPLE" : ""}
+          </Text>
           {s.athlete.goal_race ? (
             <Text style={[styles.mono, { color: color.endure }]}>
               {s.athlete.goal_race.name.toUpperCase()} · {s.athlete.goal_race.days_out}D
@@ -69,7 +71,9 @@ export default function TodayScreen() {
           <View style={[styles.engineCard, { borderTopColor: color.endure }]}>
             <View style={styles.cardHead}>
               <Text style={[styles.cardLabel, { color: color.endure }]}>ENDURANCE</Text>
-              <Text style={[styles.pill, { color: color.green }]}>LIVE</Text>
+              <Text style={[styles.pill, { color: isSample ? color.ash : color.green }]}>
+                {isSample ? "SAMPLE" : "LIVE"}
+              </Text>
             </View>
             <View style={styles.statRow}>
               <Stat value={`${e.ctl}`} label="FIT" />
@@ -100,7 +104,9 @@ export default function TodayScreen() {
         <View style={styles.sectionLabel}>
           <Text style={styles.mono}>RECENT</Text>
           <View style={styles.hr} />
-          <Text style={[styles.mono, { color: color.endure }]}>LIVE</Text>
+          <Text style={[styles.mono, { color: isSample ? color.ash : color.endure }]}>
+            {isSample ? "SAMPLE" : "LIVE"}
+          </Text>
         </View>
 
         {e.recent_runs.map((run) => (
@@ -118,8 +124,10 @@ export default function TodayScreen() {
         ))}
 
         <Text style={styles.footer}>
-          Endurance is live from your intervals.icu. Strength, body comp and today&apos;s session
-          arrive as we build Phase 1–2.
+          {isSample
+            ? "Showing bundled sample data — Supabase isn't configured or has no snapshot yet."
+            : "Endurance is live from your intervals.icu via Supabase."}{" "}
+          Strength, body comp and today&apos;s session arrive as we build Phase 1–2.
         </Text>
       </View>
     </ScrollView>

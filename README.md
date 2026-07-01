@@ -7,8 +7,8 @@ machines can't see (subjective readiness + pain), and resolves **both load engin
 one daily Green/Amber/Red verdict**.
 
 > Status: **Phase 0 done** (spine verified against real intervals.icu). **Phase 1 in
-> progress**: the Expo app runs (`npm run mobile`) with a Today/cockpit screen, and the
-> Supabase schema + seed script are in place. See the plan in `.claude/plans/`.
+> progress**: the Expo app runs (`npm run mobile`) and its Today screen reads a real,
+> Supabase-stored snapshot end-to-end. See the plan in `.claude/plans/`.
 
 ## Layout
 
@@ -77,8 +77,9 @@ npm run mobile   # starts Expo web at http://localhost:8081
 ```
 
 Best viewed narrow (F12 → device toolbar, ~400px width) — the design is phone-first.
-Right now it renders a sample snapshot seeded with real Phase 0 intervals.icu data; wiring
-it to live Supabase data is the next step (see below).
+The Today screen fetches the latest row from Supabase's `athlete_snapshot` table; if
+Supabase isn't configured (or has no row yet) it falls back to a bundled sample and
+says so in the top bar (`· SAMPLE`).
 
 ## Supabase setup
 
@@ -95,9 +96,18 @@ it to live Supabase data is the next step (see below).
 4. Add to `apps/mobile/.env` (a separate file — Expo loads env from the app root, not
    the monorepo root): `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_ANON_KEY`.
    The app auto signs in as the seeded user on launch (no login screen yet).
+5. `npm run build:snapshot --workspace scripts` — pulls intervals.icu, reads the
+   athlete profile/logged lifts/body scans from Supabase, assembles the snapshot +
+   deterministic readiness verdict via `@crucible/core`, and writes it as a new
+   `athlete_snapshot` row. This is the pragmatic stand-in for the planned scheduled
+   Deno edge function (Docker/CLI-linking friction on Windows) — same core logic,
+   manually triggered instead of cron-scheduled. Swapping it for a real edge function
+   later is a deployment change, not a logic change.
 
-Still open: the edge function that runs `@crucible/core`'s intervals.icu pull + snapshot
-assembly server-side, so the app reads live data instead of the bundled sample.
+The app never runs `@crucible/core` at runtime itself — only its TYPES are imported
+into the RN bundle (core's internal NodeNext ".js" specifiers resolve fine under
+Node/tsx but not under Metro's bundler). All computation happens server-side in step 5;
+the app just displays the resulting JSON.
 
 ## Design notes baked into the spine
 
