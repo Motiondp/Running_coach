@@ -19,6 +19,9 @@ import {
   assembleSnapshot,
   bodyCompFromManualEntry,
   scoreReadiness,
+  adjustSession,
+  sessionForDate,
+  DEFAULT_WEEKLY_TEMPLATE,
   todayLocal,
   addDays,
   DEFAULT_TZ,
@@ -142,6 +145,10 @@ export async function buildSnapshot(): Promise<boolean> {
     };
   }
 
+  // Today's prescribed session from the weekly template (baked-in default for now;
+  // DB-backed editable templates are the next iteration).
+  const prescribed = sessionForDate(DEFAULT_WEEKLY_TEMPLATE, todayLocal(tz));
+
   const snapshot = assembleSnapshot({
     tz,
     athlete,
@@ -151,9 +158,18 @@ export async function buildSnapshot(): Promise<boolean> {
     fueling: { trainingBurnKcal: 700, deficitKcal: 500 },
     strengthSets,
     checkin,
+    planContext: { todays_session: prescribed, adjusted_session: null, adjustment: null, drift_days: 0 },
   });
 
   const readiness = scoreReadiness(snapshot);
+
+  // Adjust today's session off the verdict + any active injuries (deterministic).
+  const adj = adjustSession(prescribed, readiness, athlete.active_injuries);
+  if (adj) {
+    snapshot.plan_context.adjusted_session = adj.adjusted;
+    snapshot.plan_context.adjustment = adj.adjustment;
+  }
+
   const payload = { ...snapshot, readiness };
 
   const outDir = resolve(ROOT, "artifacts");

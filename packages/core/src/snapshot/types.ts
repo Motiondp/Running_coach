@@ -8,7 +8,7 @@
  */
 import type { IsoDate } from "../dates/localDate.js";
 
-export const SNAPSHOT_SCHEMA_VERSION = 1;
+export const SNAPSHOT_SCHEMA_VERSION = 2;
 
 export type Priority = "fat_loss" | "muscle" | "race";
 
@@ -118,8 +118,31 @@ export interface CheckInSection {
   pain: PainPoint[];
 }
 
+export type SessionKind = "run" | "lift" | "cross" | "rest";
+export type RunFlavor = "easy" | "tempo" | "intervals" | "long";
+
+/** A single planned training session. `reps`+`unit` are set for interval work so the
+ *  adjuster can cut reps precisely (e.g. 5×1km → 3×1km); `title` is the display line. */
+export interface PlannedSession {
+  kind: SessionKind;
+  flavor?: RunFlavor;
+  title: string; // e.g. "Easy 8 km" — for interval runs, derived from reps×unit
+  detail?: string; // e.g. "Zone 2, conversational"
+  load: number; // target TSS-ish, drives volume scaling + matched-load swaps
+  reps?: number; // interval sessions only
+  unit?: string; // per-rep description, e.g. "1 km @ threshold"
+}
+
+export interface SessionAdjustment {
+  changed: boolean;
+  rationale: string; // plain-language one-liner shown under the struck-through original
+  rule: string; // machine tag, e.g. "amber_cut_reps" | "injury_swap_cross"
+}
+
 export interface PlanContextSection {
-  todays_session: string | null;
+  todays_session: PlannedSession | null; // as prescribed by the plan
+  adjusted_session: PlannedSession | null; // after readiness/injury adjustment
+  adjustment: SessionAdjustment | null; // null when no change / no session
   drift_days: number; // +ve ahead of plan, -ve behind
 }
 

@@ -20,6 +20,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { AthleteSnapshot, ReadinessResult } from "@crucible/core";
 import { daysBetween, todayLocal } from "@core-direct/dates/localDate";
 import { scoreReadiness } from "@core-direct/verdict/score";
+import { adjustSession } from "@core-direct/plan/adjust";
 import { useAthleteProfile } from "@/lib/athleteProfile";
 import { useCheckinStore } from "@/lib/checkinStore";
 import { isSupabaseConfigured, supabase } from "@/lib/supabase";
@@ -135,13 +136,23 @@ export function useLatestSnapshot(): SnapshotState {
       return { snapshot, readiness: base.readiness, loading, isSample };
     }
 
-    const snapshot: AthleteSnapshot = { ...base.snapshot, athlete, checkin_today: todaysCheckin };
+    // A check-in was just entered: recompute the verdict AND re-adjust today's session
+    // off it, on-device, so the struck-through session updates the instant you save —
+    // no waiting on the next build:snapshot run.
     const readiness = scoreReadiness({
-      endurance: snapshot.endurance,
-      strength: snapshot.strength,
-      checkin_today: snapshot.checkin_today,
-      athlete: snapshot.athlete,
+      endurance: base.snapshot.endurance,
+      strength: base.snapshot.strength,
+      checkin_today: todaysCheckin,
+      athlete,
     });
+
+    const prescribed = base.snapshot.plan_context.todays_session;
+    const adj = adjustSession(prescribed, readiness, athlete.active_injuries);
+    const plan_context = adj
+      ? { ...base.snapshot.plan_context, adjusted_session: adj.adjusted, adjustment: adj.adjustment }
+      : base.snapshot.plan_context;
+
+    const snapshot: AthleteSnapshot = { ...base.snapshot, athlete, checkin_today: todaysCheckin, plan_context };
     return { snapshot, readiness, loading, isSample };
   }, [base, todaysCheckin, liveProfile, loading, isSample]);
 }

@@ -41,7 +41,12 @@ const EMPTY_NUTRITION: NutritionSection = {
 
 const EMPTY_CHECKIN: CheckInSection = { present: false, energy: null, pain: [] };
 
-const EMPTY_PLAN: PlanContextSection = { todays_session: null, drift_days: 0 };
+const EMPTY_PLAN: PlanContextSection = {
+  todays_session: null,
+  adjusted_session: null,
+  adjustment: null,
+  drift_days: 0,
+};
 
 export function assembleSnapshot(input: AssembleInput): AthleteSnapshot {
   const tz = input.tz ?? DEFAULT_TZ;

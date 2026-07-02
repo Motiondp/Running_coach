@@ -14,7 +14,7 @@ import type { AthleteSnapshot } from "@crucible/core";
 import type { ReadinessResult } from "@crucible/core";
 
 export const sampleSnapshot: AthleteSnapshot = {
-  schema_version: 1,
+  schema_version: 2,
   generated_at: "2026-07-01T18:30:00Z",
   local_date: "2026-07-01",
   athlete: {
@@ -58,7 +58,16 @@ export const sampleSnapshot: AthleteSnapshot = {
   },
   nutrition: { avg_kcal_7d: null, avg_protein_7d: null, vs_target_7d: null },
   checkin_today: { present: false, energy: null, pain: [] },
-  plan_context: { todays_session: null, drift_days: 0 },
+  plan_context: {
+    todays_session: { kind: "run", flavor: "intervals", title: "", reps: 5, unit: "1 km @ threshold", detail: "90s jog recovery", load: 75 },
+    adjusted_session: { kind: "run", flavor: "intervals", title: "", reps: 3, unit: "1 km @ threshold", detail: "90s jog recovery", load: 45 },
+    adjustment: {
+      changed: true,
+      rationale: "HRV down 12% vs 7d → cut 5×1 km @ threshold to 3×, hold pace. Protect the next hard day.",
+      rule: "amber_cut_reps",
+    },
+    drift_days: 0,
+  },
 };
 
 export const sampleReadiness: ReadinessResult = {

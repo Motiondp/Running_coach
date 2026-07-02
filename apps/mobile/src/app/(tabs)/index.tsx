@@ -1,8 +1,10 @@
+import type { PlanContextSection, SessionKind } from "@crucible/core";
 import { useRouter } from "expo-router";
 import { useEffect } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
 import { todayLocal } from "@core-direct/dates/localDate";
+import { sessionTitle } from "@core-direct/plan/adjust";
 import { useSession } from "@/lib/auth";
 import { useNeedsOnboarding } from "@/lib/onboarding";
 import { useLatestSnapshot } from "@/lib/snapshot";
@@ -93,9 +95,12 @@ export default function TodayScreen() {
         </View>
 
         {/* rationale */}
-        <Text style={styles.rationale}>
-          {r.factors.map((f) => f.detail).join(" · ")}. Hold intensity on the hard reps.
-        </Text>
+        <Text style={styles.rationale}>{r.factors.map((f) => f.detail).join(" · ") || "All signals nominal."}</Text>
+
+        {/* today's session */}
+        {s.plan_context.todays_session ? (
+          <SessionCard plan={s.plan_context} />
+        ) : null}
 
         {/* subjective check-in */}
         <Pressable style={styles.checkinRow} onPress={() => router.push("/checkin")}>
@@ -241,6 +246,41 @@ function Stat({ value, label, valueColor }: { value: string; label: string; valu
   );
 }
 
+const KIND_COLOR: Record<SessionKind, string> = {
+  run: color.endure,
+  lift: color.strength,
+  cross: color.endure,
+  rest: color.ash,
+};
+
+function SessionCard({ plan }: { plan: PlanContextSection }) {
+  const prescribed = plan.todays_session!;
+  const adjusted = plan.adjusted_session ?? prescribed;
+  const changed = plan.adjustment?.changed ?? false;
+  const accent = KIND_COLOR[adjusted.kind];
+
+  return (
+    <View style={[styles.sessionCard, { borderTopColor: accent }]}>
+      <View style={styles.sessionHead}>
+        <Text style={[styles.cardLabel, { color: accent }]}>TODAY&apos;S SESSION</Text>
+        <Text style={[styles.pill, { color: changed ? color.amber : color.green }]}>
+          {changed ? "ADJUSTED" : "AS PLANNED"}
+        </Text>
+      </View>
+
+      {changed ? (
+        <Text style={styles.sessionStruck}>{sessionTitle(prescribed)}</Text>
+      ) : null}
+      <Text style={styles.sessionTitle}>{sessionTitle(adjusted)}</Text>
+      {adjusted.detail ? <Text style={styles.sessionDetail}>{adjusted.detail}</Text> : null}
+
+      {changed && plan.adjustment?.rationale ? (
+        <Text style={styles.sessionRationale}>{plan.adjustment.rationale}</Text>
+      ) : null}
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: color.void },
   content: { padding: 18, paddingTop: 28, paddingBottom: 60, alignItems: "center" },
@@ -276,6 +316,36 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   checkinText: { fontFamily: font.ui, fontSize: 12.5, color: color.fog, flex: 1 },
+
+  sessionCard: {
+    backgroundColor: color.slate,
+    borderWidth: 1,
+    borderColor: color.line,
+    borderTopWidth: 2,
+    borderRadius: radius.md,
+    padding: 14,
+    marginBottom: 16,
+  },
+  sessionHead: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 10 },
+  sessionStruck: {
+    fontFamily: font.ui,
+    fontSize: 13,
+    color: color.ash,
+    textDecorationLine: "line-through",
+    marginBottom: 2,
+  },
+  sessionTitle: { fontFamily: font.display, fontWeight: "700", fontSize: 19, color: color.bone, letterSpacing: -0.3 },
+  sessionDetail: { fontFamily: font.ui, fontSize: 12.5, color: color.fog, marginTop: 3 },
+  sessionRationale: {
+    fontFamily: font.ui,
+    fontSize: 12.5,
+    lineHeight: 18,
+    color: color.amber,
+    marginTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: color.line,
+    paddingTop: 10,
+  },
 
   engineRow: { flexDirection: "row", gap: 10, marginBottom: 16 },
   engineCard: {
