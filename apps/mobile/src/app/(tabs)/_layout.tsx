@@ -39,6 +39,13 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
+        name="plan"
+        options={{
+          title: "Plan",
+          tabBarIcon: ({ focused }) => <TabIcon name="calendar-week" focused={focused} />,
+        }}
+      />
+      <Tabs.Screen
         name="coach"
         options={{
           title: "Coach",
