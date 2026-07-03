@@ -25,6 +25,7 @@ import {
   todayLocal,
   addDays,
   DEFAULT_TZ,
+  type WeeklyTemplate,
   type AthleteSection,
   type ManualScanEntry,
   type StrengthSetInput,
@@ -40,6 +41,7 @@ import {
   fetchManualScanEntries,
   fetchStrengthSets,
   fetchTodaysCheckin,
+  fetchPlanTemplate,
   writeSnapshot,
 } from "./lib/supabase-source.js";
 
@@ -107,6 +109,7 @@ export async function buildSnapshot(): Promise<boolean> {
   let scanEntries = SAMPLE_SCAN;
   let strengthSets = SAMPLE_LIFTS;
   let checkin: Awaited<ReturnType<typeof fetchTodaysCheckin>> | undefined;
+  let template: WeeklyTemplate = DEFAULT_WEEKLY_TEMPLATE;
   let userId: string | undefined;
 
   if (supabaseConfigured) {
@@ -117,11 +120,12 @@ export async function buildSnapshot(): Promise<boolean> {
     if (!user) throw new Error(`Seeded user ${SEED_EMAIL} not found — run npm run db:seed first.`);
     userId = user.id;
 
-    [athlete, scanEntries, strengthSets, checkin] = await Promise.all([
+    [athlete, scanEntries, strengthSets, checkin, template] = await Promise.all([
       fetchAthleteSection(admin, userId),
       fetchManualScanEntries(admin, userId),
       fetchStrengthSets(admin, userId),
       fetchTodaysCheckin(admin, userId, todayLocal(tz)),
+      fetchPlanTemplate(admin, userId),
     ]);
     console.log(
       `✓ Supabase: athlete profile, ${scanEntries.length} scan entries, ${strengthSets.length} logged sets, checkin ${checkin.present ? "present" : "none"}`,
@@ -145,9 +149,9 @@ export async function buildSnapshot(): Promise<boolean> {
     };
   }
 
-  // Today's prescribed session from the weekly template (baked-in default for now;
-  // DB-backed editable templates are the next iteration).
-  const prescribed = sessionForDate(DEFAULT_WEEKLY_TEMPLATE, todayLocal(tz));
+  // Today's prescribed session from the athlete's (editable) weekly template, falling
+  // back to the built-in default for any unset day.
+  const prescribed = sessionForDate(template, todayLocal(tz));
 
   const snapshot = assembleSnapshot({
     tz,

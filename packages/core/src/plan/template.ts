@@ -13,9 +13,9 @@
  */
 import { isoDateToUtcNoon, type IsoDate } from "../dates/localDate.js";
 import type { PlannedSession } from "../snapshot/types.js";
-import { DEFAULT_WEEKLY_TEMPLATE, type WeeklyTemplate } from "./defaultTemplate.js";
+import { DEFAULT_WEEKLY_TEMPLATE, mergeWeeklyTemplate, type WeeklyTemplate } from "./defaultTemplate.js";
 
-export { DEFAULT_WEEKLY_TEMPLATE, type WeeklyTemplate };
+export { DEFAULT_WEEKLY_TEMPLATE, mergeWeeklyTemplate, type WeeklyTemplate };
 
 /** Weekday (0=Sun … 6=Sat) for a YYYY-MM-DD calendar date. */
 export function weekdayOf(date: IsoDate): number {

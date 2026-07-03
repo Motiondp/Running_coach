@@ -8,6 +8,7 @@
  * snapshot contract and every computation stay in @crucible/core either way.
  */
 import { createClient } from "@supabase/supabase-js";
+import { mergeWeeklyTemplate, type WeeklyTemplate } from "@crucible/core";
 import type {
   AthleteSection,
   CheckInSection,
@@ -98,6 +99,17 @@ export async function fetchManualScanEntries(admin: Admin, userId: string): Prom
     unit: row.unit ?? undefined,
     date: row.date,
   }));
+}
+
+/** Fetch the athlete's stored weekly template, merged over the built-in default. */
+export async function fetchPlanTemplate(admin: Admin, userId: string): Promise<WeeklyTemplate> {
+  const { data, error } = await admin
+    .from("athlete")
+    .select("plan_template")
+    .eq("id", userId)
+    .maybeSingle();
+  if (error) throw error;
+  return mergeWeeklyTemplate((data?.plan_template ?? null) as Partial<WeeklyTemplate> | null);
 }
 
 /** Fetch today's check-in row (by local date), if the athlete has logged one. */

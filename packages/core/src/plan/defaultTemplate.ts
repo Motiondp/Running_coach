@@ -8,6 +8,18 @@ import type { PlannedSession } from "../snapshot/types.js";
 
 export type WeeklyTemplate = Record<number, PlannedSession>;
 
+/**
+ * Merge a stored (possibly partial or null) template over the built-in default, so a
+ * missing/empty day always falls back to a sensible session. Runtime-import-free, so
+ * both the app (via @core-direct) and the server script use the exact same merge.
+ */
+export function mergeWeeklyTemplate(
+  stored: Partial<WeeklyTemplate> | null | undefined,
+): WeeklyTemplate {
+  // Cast is safe: DEFAULT provides all 7 days, so no key can be undefined after merge.
+  return { ...DEFAULT_WEEKLY_TEMPLATE, ...(stored ?? {}) } as WeeklyTemplate;
+}
+
 /** A sensible starter week: two quality runs, a long run, two lifts, easy + rest. */
 export const DEFAULT_WEEKLY_TEMPLATE: WeeklyTemplate = {
   1: { kind: "lift", title: "Lower strength", detail: "Squat focus, 4×5", load: 45 }, // Mon

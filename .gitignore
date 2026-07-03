@@ -29,3 +29,7 @@ artifacts/
 
 .vercel
 .env*
+
+# data backups (never commit — contain PII)
+*supabase-backup*.json
+*-backup-*.json

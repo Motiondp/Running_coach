@@ -30,6 +30,7 @@ export default function RootLayout() {
         }}
       >
         <Stack.Screen name="checkin" options={{ presentation: "modal" }} />
+        <Stack.Screen name="plan-edit" options={{ presentation: "modal" }} />
       </Stack>
     </>
   );

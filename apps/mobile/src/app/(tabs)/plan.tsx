@@ -1,9 +1,11 @@
 import type { PlannedSession, SessionKind } from "@crucible/core";
 import { isoDateToUtcNoon, todayLocal } from "@core-direct/dates/localDate";
 import { sessionTitle } from "@core-direct/plan/adjust";
-import { DEFAULT_WEEKLY_TEMPLATE } from "@core-direct/plan/defaultTemplate";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { useFocusEffect, useRouter } from "expo-router";
+import { useCallback } from "react";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
+import { usePlanTemplate } from "@/lib/planTemplate";
 import { color, font, radius } from "@/theme/tokens";
 
 // Monday-first display order over the template's 0=Sun..6=Sat keys.
@@ -31,8 +33,13 @@ function restSession(): PlannedSession {
 }
 
 export default function PlanScreen() {
+  const router = useRouter();
+  const { template, reload } = usePlanTemplate();
   const today = todayLocal("Pacific/Auckland");
   const todayWeekday = isoDateToUtcNoon(today).getUTCDay();
+
+  // Refresh whenever the tab regains focus (e.g. returning from the edit modal).
+  useFocusEffect(useCallback(() => reload(), [reload]));
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
@@ -40,19 +47,20 @@ export default function PlanScreen() {
         <Text style={styles.mono}>YOUR WEEK</Text>
         <Text style={styles.title}>Training plan</Text>
         <Text style={styles.lede}>
-          Your weekly rhythm. Each morning the coach adapts the day's session to your readiness — this
-          is the baseline it works from.
+          Your weekly rhythm — tap any day to edit it. Each morning the coach adapts the day's session
+          to your readiness; this is the baseline it works from.
         </Text>
 
         {WEEKDAY_ORDER.map((wd) => {
-          const session = DEFAULT_WEEKLY_TEMPLATE[wd] ?? restSession();
+          const session = template[wd] ?? restSession();
           const isToday = wd === todayWeekday;
           const accent = KIND_COLOR[session.kind];
           const isRest = session.kind === "rest";
 
           return (
-            <View
+            <Pressable
               key={wd}
+              onPress={() => router.push({ pathname: "/plan-edit", params: { weekday: String(wd) } })}
               style={[
                 styles.dayRow,
                 { borderLeftColor: accent },
@@ -78,13 +86,13 @@ export default function PlanScreen() {
                 <Text style={[styles.kindTag, { color: accent }]}>{KIND_LABEL[session.kind]}</Text>
                 {!isRest ? <Text style={styles.loadTag}>{session.load}</Text> : null}
               </View>
-            </View>
+            </Pressable>
           );
         })}
 
         <Text style={styles.footer}>
-          This week is a fixed starter template for now. Editable plans and race-anchored
-          progression are next.
+          Edits save to your account and drive tomorrow's session. Race-anchored progression
+          (a plan that builds toward race day) is next.
         </Text>
       </View>
     </ScrollView>
